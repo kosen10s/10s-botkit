@@ -19,28 +19,39 @@ This bot demonstrates many of the core features of Botkit:
 
 # RUN THE BOT:
 
-  Create a new app via the Slack Developer site:
+  Get a Bot token from Slack:
 
-    -> http://api.slack.com
-
-  Get a Botkit Studio token from Botkit.ai:
-
-    -> https://studio.botkit.ai/
+    -> http://my.slack.com/services/new/bot
 
   Run your bot from the command line:
 
-    clientId=<MY SLACK TOKEN> clientSecret=<my client secret> PORT=<3000> studio_token=<MY BOTKIT STUDIO TOKEN> node bot.js
+    token=<MY TOKEN> node slack_bot.js
 
 # USE THE BOT:
 
-    Navigate to the built-in login page:
+  Find your bot inside Slack to send it a direct message.
 
-    https://<myhost.com>/login
+  Say: "Hello"
 
-    This will authenticate you with Slack.
+  The bot will reply "Hello!"
 
-    If successful, your bot will come online and greet you.
+  Say: "who are you?"
 
+  The bot will tell you its name, where it is running, and for how long.
+
+  Say: "Call me <nickname>"
+
+  Tell the bot your nickname. Now you are friends.
+
+  Say: "who am I?"
+
+  The bot will tell you your nickname, if it knows one for you.
+
+  Say: "shutdown"
+
+  The bot will ask if you are sure, and then shut itself down.
+
+  Make sure to invite your bot into other channels using /invite @<my bot>!
 
 # EXTEND THE BOT:
 
@@ -54,128 +65,182 @@ This bot demonstrates many of the core features of Botkit:
 var env = require('node-env-file');
 env(__dirname + '/.env');
 
-
-if (!process.env.clientId || !process.env.clientSecret || !process.env.PORT) {
-  usage_tip();
-  // process.exit(1);
+if (!process.env.token) {
+  console.log('Error: Specify token in environment');
+  process.exit(1);
 }
 
 var Botkit = require('botkit');
-var debug = require('debug')('botkit:main');
+var os = require('os');
 
-var bot_options = {
-    clientId: process.env.clientId,
-    clientSecret: process.env.clientSecret,
-    // debug: true,
-    scopes: ['bot'],
-    studio_token: process.env.studio_token,
-    studio_command_uri: process.env.studio_command_uri
-};
+var controller = Botkit.slackbot({
+  debug: true,
+});
 
-// Use a mongo database if specified, otherwise store in a JSON file local to the app.
-// Mongo is automatically configured when deploying to Heroku
-if (process.env.MONGO_URI) {
-    var mongoStorage = require('botkit-storage-mongo')({mongoUri: process.env.MONGO_URI});
-    bot_options.storage = mongoStorage;
-} else {
-    bot_options.json_file_store = __dirname + '/.data/db/'; // store user data in a simple JSON format
-}
+var bot = controller.spawn({
+  token: process.env.token
+}).startRTM();
 
-// Create the Botkit controller, which controls all instances of the bot.
-var controller = Botkit.slackbot(bot_options);
+controller.hears(['hello', 'hi'], 'direct_message,direct_mention,mention', function(bot, message) {
 
-controller.startTicking();
-
-// Set up an Express-powered webserver to expose oauth and webhook endpoints
-var webserver = require(__dirname + '/components/express_webserver.js')(controller);
-
-if (!process.env.clientId || !process.env.clientSecret) {
-
-  // Load in some helpers that make running Botkit on Glitch.com better
-  require(__dirname + '/components/plugin_glitch.js')(controller);
-
-  webserver.get('/', function(req, res){
-    res.render('installation', {
-      studio_enabled: controller.config.studio_token ? true : false,
-      domain: req.get('host'),
-      protocol: req.protocol,
-      glitch_domain:  process.env.PROJECT_DOMAIN,
-      layout: 'layouts/default'
-    });
-  })
-
-  var where_its_at = 'https://' + process.env.PROJECT_DOMAIN + '.glitch.me/';
-  console.log('WARNING: This application is not fully configured to work with Slack. Please see instructions at ' + where_its_at);
-}else {
-
-  webserver.get('/', function(req, res){
-    res.render('index', {
-      domain: req.get('host'),
-      protocol: req.protocol,
-      glitch_domain:  process.env.PROJECT_DOMAIN,
-      layout: 'layouts/default'
-    });
-  })
-  // Set up a simple storage backend for keeping a record of customers
-  // who sign up for the app via the oauth
-  require(__dirname + '/components/user_registration.js')(controller);
-
-  // Send an onboarding message when a new team joins
-  require(__dirname + '/components/onboarding.js')(controller);
-
-  // Load in some helpers that make running Botkit on Glitch.com better
-  require(__dirname + '/components/plugin_glitch.js')(controller);
-
-  // enable advanced botkit studio metrics
-  require('botkit-studio-metrics')(controller);
-
-  var normalizedPath = require("path").join(__dirname, "skills");
-  require("fs").readdirSync(normalizedPath).forEach(function(file) {
-    require("./skills/" + file)(controller);
+  bot.api.reactions.add({
+    timestamp: message.ts,
+    channel: message.channel,
+    name: 'robot_face',
+  }, function(err, res) {
+    if (err) {
+      bot.botkit.log('Failed to add emoji reaction :(', err);
+    }
   });
 
-  // This captures and evaluates any message sent to the bot as a DM
-  // or sent to the bot in the form "@bot message" and passes it to
-  // Botkit Studio to evaluate for trigger words and patterns.
-  // If a trigger is matched, the conversation will automatically fire!
-  // You can tie into the execution of the script using the functions
-  // controller.studio.before, controller.studio.after and controller.studio.validate
-  if (process.env.studio_token) {
-      controller.on('direct_message,direct_mention,mention', function(bot, message) {
-          controller.studio.runTrigger(bot, message.text, message.user, message.channel, message).then(function(convo) {
-              if (!convo) {
-                  // no trigger was matched
-                  // If you want your bot to respond to every message,
-                  // define a 'fallback' script in Botkit Studio
-                  // and uncomment the line below.
-                  // controller.studio.run(bot, 'fallback', message.user, message.channel);
-              } else {
-                  // set variables here that are needed for EVERY script
-                  // use controller.studio.before('script') to set variables specific to a script
-                  convo.setVar('current_time', new Date());
+
+  controller.storage.users.get(message.user, function(err, user) {
+    if (user && user.name) {
+      bot.reply(message, 'Hello ' + user.name + '!!');
+    } else {
+      bot.reply(message, 'Hello.');
+    }
+  });
+});
+
+controller.hears(['call me (.*)', 'my name is (.*)'], 'direct_message,direct_mention,mention', function(bot, message) {
+  var name = message.match[1];
+  controller.storage.users.get(message.user, function(err, user) {
+    if (!user) {
+      user = {
+        id: message.user,
+      };
+    }
+    user.name = name;
+    controller.storage.users.save(user, function(err, id) {
+      bot.reply(message, 'Got it. I will call you ' + user.name + ' from now on.');
+    });
+  });
+});
+
+controller.hears(['what is my name', 'who am i'], 'direct_message,direct_mention,mention', function(bot, message) {
+
+  controller.storage.users.get(message.user, function(err, user) {
+    if (user && user.name) {
+      bot.reply(message, 'Your name is ' + user.name);
+    } else {
+      bot.startConversation(message, function(err, convo) {
+        if (!err) {
+          convo.say('I do not know your name yet!');
+          convo.ask('What should I call you?', function(response, convo) {
+            convo.ask('You want me to call you `' + response.text + '`?', [
+              {
+                pattern: 'yes',
+                callback: function(response, convo) {
+                  // since no further messages are queued after this,
+                  // the conversation will end naturally with status == 'completed'
+                  convo.next();
+                }
+              },
+              {
+                pattern: 'no',
+                callback: function(response, convo) {
+                  // stop the conversation. this will cause it to end with status == 'stopped'
+                  convo.stop();
+                }
+              },
+              {
+                default: true,
+                callback: function(response, convo) {
+                  convo.repeat();
+                  convo.next();
+                }
               }
-          }).catch(function(err) {
-              bot.reply(message, 'I experienced an error with a request to Botkit Studio: ' + err);
-              debug('Botkit Studio: ', err);
+            ]);
+
+            convo.next();
+
+          }, {'key': 'nickname'}); // store the results in a field called nickname
+
+          convo.on('end', function(convo) {
+            if (convo.status == 'completed') {
+              bot.reply(message, 'OK! I will update my dossier...');
+
+              controller.storage.users.get(message.user, function(err, user) {
+                if (!user) {
+                  user = {
+                    id: message.user,
+                  };
+                }
+                user.name = convo.extractResponse('nickname');
+                controller.storage.users.save(user, function(err, id) {
+                  bot.reply(message, 'Got it. I will call you ' + user.name + ' from now on.');
+                });
+              });
+
+
+
+            } else {
+              // this happens if the conversation ended prematurely for some reason
+              bot.reply(message, 'OK, nevermind!');
+            }
           });
+        }
       });
-  } else {
-      console.log('~~~~~~~~~~');
-      console.log('NOTE: Botkit Studio functionality has not been enabled');
-      console.log('To enable, pass in a studio_token parameter with a token from https://studio.botkit.ai/');
+    }
+  });
+});
+
+
+controller.hears(['shutdown'], 'direct_message,direct_mention,mention', function(bot, message) {
+
+  bot.startConversation(message, function(err, convo) {
+
+    convo.ask('Are you sure you want me to shutdown?', [
+      {
+        pattern: bot.utterances.yes,
+        callback: function(response, convo) {
+          convo.say('Bye!');
+          convo.next();
+          setTimeout(function() {
+            process.exit();
+          }, 3000);
+        }
+      },
+      {
+        pattern: bot.utterances.no,
+        default: true,
+        callback: function(response, convo) {
+          convo.say('*Phew!*');
+          convo.next();
+        }
+      }
+    ]);
+  });
+});
+
+
+controller.hears(['uptime', 'identify yourself', 'who are you', 'what is your name'],
+'direct_message,direct_mention,mention', function(bot, message) {
+
+  var hostname = os.hostname();
+  var uptime = formatUptime(process.uptime());
+
+  bot.reply(message,
+    ':robot_face: I am a bot named <@' + bot.identity.name +
+    '>. I have been running for ' + uptime + ' on ' + hostname + '.');
+
+});
+
+function formatUptime(uptime) {
+  var unit = 'second';
+  if (uptime > 60) {
+    uptime = uptime / 60;
+    unit = 'minute';
   }
-}
+  if (uptime > 60) {
+    uptime = uptime / 60;
+    unit = 'hour';
+  }
+  if (uptime != 1) {
+    unit = unit + 's';
+  }
 
-
-
-
-
-function usage_tip() {
-    console.log('~~~~~~~~~~');
-    console.log('Botkit Starter Kit');
-    console.log('Execute your bot application like this:');
-    console.log('clientId=<MY SLACK CLIENT ID> clientSecret=<MY CLIENT SECRET> PORT=3000 studio_token=<MY BOTKIT STUDIO TOKEN> node bot.js');
-    console.log('Get Slack app credentials here: https://api.slack.com/apps')
-    console.log('Get a Botkit Studio token here: https://studio.botkit.ai/')
-    console.log('~~~~~~~~~~');
+  uptime = uptime + ' ' + unit;
+  return uptime;
 }
