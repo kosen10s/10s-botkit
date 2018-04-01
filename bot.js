@@ -73,8 +73,11 @@ if (!process.env.token) {
 var Botkit = require('botkit');
 var os = require('os');
 
+var mongoStorage = require('botkit-storage-mongo')({mongoUri: process.env.mongoUri, tables: ['optional','list', 'of', 'custom','tables', 'to', 'add']});
+
 var controller = Botkit.slackbot({
   debug: true,
+  storage: mongoStorage,
 });
 
 var bot = controller.spawn({
