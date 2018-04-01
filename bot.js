@@ -85,6 +85,7 @@ var bot = controller.spawn({
 }).startRTM();
 
 require('./skills/welcome.js')(controller);
+require('./skills/shuffle.js')(controller);
 
 controller.hears(['hello', 'hi'], 'direct_message,direct_mention,mention', function(bot, message) {
 
