@@ -86,6 +86,7 @@ var bot = controller.spawn({
 
 require('./skills/welcome.js')(controller);
 require('./skills/shuffle.js')(controller);
+require('./skills/auth.js')(controller);
 
 controller.hears(['hello', 'hi'], 'direct_message,direct_mention,mention', function(bot, message) {
 
