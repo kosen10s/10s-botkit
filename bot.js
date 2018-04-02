@@ -88,6 +88,7 @@ require('./skills/welcome.js')(controller);
 require('./skills/shuffle.js')(controller);
 require('./skills/auth.js')(controller);
 require('./skills/lt.js')(controller);
+require('./skills/choice.js')(controller);
 
 controller.hears(['hello', 'hi'], 'direct_message,direct_mention,mention', function(bot, message) {
 
