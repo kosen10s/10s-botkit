@@ -1,3 +1,5 @@
+const help = require('../helpers/help.js');
+
 function shuffle(array) {
   for(var i = array.length - 1; i > 0; i--) {
     var r = Math.floor(Math.random() * (i + 1));
@@ -7,6 +9,11 @@ function shuffle(array) {
   }
 }
 
+help.desc(
+  'shuffle',
+  'shuffle ITEM...',
+  '空白/改行区切りの要素をシャッフルして返す'
+)
 module.exports = function(controller) {
   controller.hears('shuffle ((.|\\s)+)$','direct_message,direct_mention,mention', function(bot, message) {
     var text = message.match[1].trim();

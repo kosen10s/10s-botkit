@@ -1,3 +1,5 @@
+const help = require('../helpers/help.js');
+
 var toLt = function(lt_num) {
   return 'kosen10s LT #' + lt_num;
 }
@@ -16,6 +18,11 @@ module.exports = function(controller) {
   const helper = require('../helpers/auth.js')(controller);
   const github = require('../helpers/github.js');
 
+  help.desc(
+    'lt start',
+    'lt start',
+    '次回イベントに向けたissueをリポジトリに発行する'
+  )
   controller.hears('lt start', 'direct_message,direct_mention,mention', function(bot, message) {
     helper.hasRole(message.user, 'lt', function(has) {
       if (!has) {
@@ -83,6 +90,11 @@ module.exports = function(controller) {
     });
   });
 
+  help.desc(
+    'lt next',
+    'lt next NUMBER',
+    '次回イベントのナンバリングを変更する'
+  )
   controller.hears('lt next (\\d+)', 'direct_message,direct_mention,mention', function(bot, message) {
     var next = parseInt(message.match[1]);
     controller.storage.teams.get(bot.identifyTeam(), function(err, team) {

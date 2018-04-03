@@ -84,6 +84,7 @@ var bot = controller.spawn({
   token: process.env.token
 }).startRTM();
 
+require('./skills/help.js')(controller);
 require('./skills/welcome.js')(controller);
 require('./skills/shuffle.js')(controller);
 require('./skills/auth.js')(controller);

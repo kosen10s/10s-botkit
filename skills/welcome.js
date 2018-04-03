@@ -1,3 +1,10 @@
+const help = require('../helpers/help.js');
+
+help.desc(
+  'welcome',
+  'welcome MESSAGE',
+  'ユーザーがチャンネルにjoinした時のメッセージを更新する'
+)
 module.exports = function(controller) {
   controller.on('user_channel_join,user_group_join', function(bot, message) {
     controller.storage.channels.get(message.channel, function(err, channel) {
