@@ -4,7 +4,7 @@
   "description": "Slack bot for kosen10s",
   "main": "bot.js",
   "scripts": {
-    "start": "cross-env NODE_ENV=production forever bot.js",
+    "start": "cross-env NODE_ENV=production forever start bot.js",
     "stop": "forever stop bot.js",
     "dev": "node bot.js"
   },
