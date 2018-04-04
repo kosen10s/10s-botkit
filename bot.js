@@ -80,6 +80,8 @@ let botConfig = {
 };
 if (process.env.NODE_ENV == 'production') {
   botConfig.debug = false;
+} else {
+  botConfig.debug = true;
 }
 
 var controller = Botkit.slackbot(botConfig);
