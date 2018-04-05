@@ -4,8 +4,13 @@
 ## Build
 
 ```
+cp .env.template .env
+vim .env  # set token
+```
+
+```
 npm install
-npm start
+npm run dev
 ```
 
 
