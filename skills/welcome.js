@@ -2,7 +2,7 @@ const help = require('../helpers/help.js');
 
 help.desc(
   'welcome',
-  'welcome MESSAGE',
+  'welcome [MESSAGE]',
   'ユーザーがチャンネルにjoinした時のメッセージを更新する'
 )
 module.exports = function(controller) {
@@ -24,9 +24,18 @@ module.exports = function(controller) {
       }
       channel.welcomeMsg = welcomeMsg;
       controller.storage.channels.save(channel, function(err, id) {
-        bot.reply(message, 'Saved.');
+        bot.reply(message, 'Saved: ' + welcomeMsg);
       });
     });
-    bot.reply(message, welcomeText);
+  });
+
+  controller.hears('welcome', 'direct_mention,mention', function(bot, message) {
+    controller.storage.channels.get(message.channel, function(err, channel) {
+      if (!channel) {
+        channel = {}
+      }
+      var welcomeMsg = channel.welcomeMsg || 'Welcome, <@' + message.user + '>';
+      bot.reply(message, welcomeMsg);
+    });
   });
 }
