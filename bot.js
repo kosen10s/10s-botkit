@@ -73,15 +73,16 @@ if (!process.env.token) {
 var Botkit = require('botkit');
 var os = require('os');
 
-var mongoStorage = require('botkit-storage-mongo')({mongoUri: process.env.mongoUri, tables: ['optional','list', 'of', 'custom','tables', 'to', 'add']});
+let botConfig = {};
 
-let botConfig = {
-  storage: mongoStorage,
-};
 if (process.env.NODE_ENV == 'production') {
   botConfig.debug = false;
 } else {
   botConfig.debug = true;
+}
+if (process.env.mongoUri) {
+  var mongoStorage = require('botkit-storage-mongo')({mongoUri: process.env.mongoUri, tables: ['optional','list', 'of', 'custom','tables', 'to', 'add']});
+  botConfig.storage = mongoStorage;
 }
 
 var controller = Botkit.slackbot(botConfig);
