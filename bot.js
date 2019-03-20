@@ -73,7 +73,9 @@ if (!process.env.token) {
 var Botkit = require('botkit');
 var os = require('os');
 
-let botConfig = {};
+let botConfig = {
+  retry: Infinity,
+};
 
 if (process.env.NODE_ENV == 'production') {
   botConfig.debug = false;
