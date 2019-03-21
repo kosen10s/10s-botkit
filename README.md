@@ -10,7 +10,7 @@ vim .env  # set token
 
 ```
 npm install
-npm run dev
+npm start
 ```
 
 
