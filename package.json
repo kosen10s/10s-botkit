@@ -4,16 +4,14 @@
   "description": "Slack bot for kosen10s",
   "main": "bot.js",
   "scripts": {
-    "start": "cross-env NODE_ENV=production forever start bot.js",
-    "stop": "forever stop bot.js",
-    "dev": "node bot.js"
+    "start": "node bot.js",
+    "prod": "cross-env NODE_ENV=production node bot.js"
   },
   "dependencies": {
     "botkit": "^0.7.4",
     "botkit-storage-mongo": "^1.0.7",
     "cross-env": "^5.2.0",
     "debug": "^4.1.1",
-    "forever": "^0.15.3",
     "node-env-file": "^0.1.8",
     "octokat": "^0.10.0"
   },
